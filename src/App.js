@@ -1,72 +1,143 @@
-// This is the main component that renders the app
-import React, { useState } from "react";
-import Camera from "./Camera"; // This is a custom component that handles the camera access and selfie taking
-import Photos from "./Photos"; // This is a custom component that displays the photos from the API
-import Loading from "./Loading"; // This is a custom component that shows a loading spinner
-import Error from "./Error"; // This is a custom component that shows an error message
+import React, { useRef, useState } from "react";
+import Webcam from "react-webcam";
+import axios from "axios";
+import { Container, Row, Col, Button, Spinner, Modal } from "react-bootstrap";
+import "./App.css";
 
 function App() {
-  const [selfie, setSelfie] = useState(null); // This state stores the selfie image as a base64 string
-  const [photos, setPhotos] = useState(null); // This state stores the photos array from the API response
-  const [loading, setLoading] = useState(false); // This state indicates whether the app is loading data from the API
-  const [error, setError] = useState(null); // This state stores any error message from the API or camera
+  const webcamRef = useRef(null);
+  const [imgSrc, setImgSrc] = useState(null);
+  const [showSelfie, setShowSelfie] = useState(true); // state variable to show or hide the selfie and webcam component
+  const [loading, setLoading] = useState(false); // state variable to show or hide the loading animation
+  const [photos, setPhotos] = useState([]); // state variable to store the photos from the API response
+  const [showModal, setShowModal] = useState(false); // state variable to show or hide the modal component
+  const [modalContent, setModalContent] = useState(null); // state variable to store the modal content (image URL)
 
-  // This function handles the selfie taking event from the Camera component
-  const handleSelfie = (image) => {
-    setSelfie(image); // Set the selfie state to the image base64 string
-    setLoading(true); // Set the loading state to true to show the loading spinner
-    fetchPhotos(image); // Call the fetchPhotos function with the image as an argument
+  const capture = React.useCallback(() => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    const file = base64ToFile(imageSrc, "image/jpeg", "selfie.jpg");
+    setImgSrc(file);
+    setShowSelfie(false); // hide the selfie and webcam component after capturing
+    setLoading(true); // show the loading animation while fetching the photos
+    fetchPhotos(file); // call the function to fetch the photos from the API
+  }, [webcamRef]);
+
+  // This is a helper function that converts a base64 string to a file object
+  const base64ToFile = (base64, type, name) => {
+    const byteString = atob(base64.split(",")[1]); // Decode the base64 string
+    const ab = new ArrayBuffer(byteString.length); // Create an array buffer
+    const ia = new Uint8Array(ab); // Create a uint8 array
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i); // Copy the bytes to the array buffer
+    }
+    return new File([ab], name, { type: type }); // Return a file object with the specified type and name
   };
 
-  // This function handles the retake selfie event from the Photos component
-  const handleRetake = () => {
-    setSelfie(null); // Reset the selfie state to null
-    setPhotos(null); // Reset the photos state to null
-    setError(null); // Reset the error state to null
-  };
-
-  // This function calls the API with the selfie image and updates the photos state with the response
   const fetchPhotos = async (file) => {
     try {
-      const formData = new FormData(); // Create a new FormData object to store the image file
-      formData.append("selfie", file); // Append the image file as a file with name "selfie"
-      const response = await fetch(
+      const formData = new FormData();
+      formData.append("selfie", file);
+      const response = await axios.post(
         "https://c2u-api.onrender.com/get-my-photos",
-        {
-          method: "POST", // Use POST method to send data to the API
-          body: formData, // Use formData as the request body
-        }
-      ); // Await for the response from the API
-      const data = await response.json(); // Parse the response as JSON and await for it
-      if (data.message === "Photos found for your selfie") {
-        // If the message is "Photos found for your selfie"
-        setPhotos(data.imageUrls); // Set the photos state to the imageUrls array from the data object
+        formData
+      );
+      console.log(response.data);
+      if (response.data.message === "Photos found for your selfie") {
+        setPhotos(response.data.imageUrls); // store the photos in the state variable
       } else {
-        // If the message is anything else (such as "No photos found for your selfie")
-        setError(data.message); // Set the error state to the message from the data object
+        alert("No photos found for your selfie. Please try again later.");
       }
-    } catch (err) {
-      // If there is any error in fetching or parsing data
-      setError(err.message); // Set the error state to the error message
-    } finally {
-      // Finally, after try or catch block is executed
-      setLoading(false); // Set the loading state to false to hide the loading spinner
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong. Please try again later.");
     }
+    setLoading(false); // hide the loading animation after fetching the photos
+  };
+
+  const handleShowModal = (imageURL) => {
+    setModalContent(imageURL); // set the modal content to be the image URL
+    setShowModal(true); // show the modal component
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false); // hide the modal component
+  };
+
+  const retakeSelfie = () => {
+    setImgSrc(null);
+    setShowSelfie(true); // show the selfie and webcam component again
+    setPhotos([]); // clear the photos from the state variable
   };
 
   return (
     <div className="App">
-      <h1>CamToYou</h1>
-      <p>Take a selfie and get your photos from the event</p>
-      {selfie ? (
-        <img src={URL.createObjectURL(selfie)} alt="Your selfie" /> // If there is a selfie, show it as an image element with src attribute as the base64 string and alt attribute as "Your selfie"
-      ) : (
-        <Camera onSelfie={handleSelfie} onError={setError} /> // If there is no selfie, show the Camera component and pass handleSelfie function as onSelfie prop and setError function as onError prop
-      )}
-      {/* <Camera onSelfie={handleSelfie} onError={setError} /> */}
-      {loading && <Loading />} {/*If loading is true, show the Loading component*/}
-      {error && <Error message={error} />} {/*If error is not null, show the Error component and pass error as message prop */}
-      {photos && <Photos photos={photos} onRetake={handleRetake} />} {/*If photos is not null, show the Photos component and pass photos as photos prop and handleRetake function as onRetake prop*/}
+      <Container fluid>
+        <Row className="header">
+          <Col>
+            <h1>CamToYou</h1>
+          </Col>
+          <Col className="retake-button">
+            {photos.length > 0 && ( // only show the retake button if there are photos
+              <Button variant="outline-primary" onClick={retakeSelfie}>
+                Retake Selfie
+              </Button>
+            )}
+          </Col>
+        </Row>
+        {showSelfie ? ( // conditionally render the selfie and webcam component based on showSelfie state variable
+          <Row className="webcam">
+            <Col>
+              <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" />
+              {imgSrc && (
+                <img src={imgSrc} alt="selfie" className="selfie-image" />
+              )}
+            </Col>
+          </Row>
+        ) : null}
+        <Row className="capture-button">
+          <Col>
+            {showSelfie && ( // only show the capture button if showSelfie is true
+              <Button variant="primary" onClick={capture} className="capture">
+                Take selfie
+              </Button>
+            )}
+          </Col>
+        </Row>
+        {loading ? ( // conditionally render the loading animation based on loading state variable
+          <Row className="spinner">
+            <Col>
+              <Spinner animation="border" variant="primary" />
+            </Col>
+          </Row>
+        ) : null}
+        <Row className="photos">
+          {photos.map((photo, index) => ( // map over the photos array and render each photo in a column
+            photo && ( // only render the photo if it is not null
+              <Col key={index} xs={4} className="photo">
+                <img
+                  src={photo}
+                  alt={`photo-${index}`}
+                  className="photo-image"
+                  onClick={() => handleShowModal(photo)} // call the handleShowModal function with the photo URL when clicked
+                />
+              </Col>
+            )
+          ))}
+        </Row>
+      </Container>
+      <Modal show={showModal} onHide={handleCloseModal} size="lg" centered> {/*render the modal component with the modalContent as the image URL*/}
+        <Modal.Body>
+          <img src={modalContent} alt="modal-image" className="modal-image" />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Close
+          </Button>
+          <a href={modalContent} download> {/*use an anchor tag with a download attribute to enable downloading the image*/}
+            <Button variant="primary">Download</Button>
+          </a>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
