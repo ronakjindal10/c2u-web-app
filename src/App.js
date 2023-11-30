@@ -9,9 +9,11 @@ function App() {
   const [imgSrc, setImgSrc] = useState(null);
   const [showSelfie, setShowSelfie] = useState(true); // state variable to show or hide the selfie and webcam component
   const [loading, setLoading] = useState(false); // state variable to show or hide the loading animation
+  const [imageLoaded, setImageLoaded] = useState({}); // state variable to  track if an image has loaded
   const [photos, setPhotos] = useState([]); // state variable to store the photos from the API response
   const [showModal, setShowModal] = useState(false); // state variable to show or hide the modal component
   const [modalContent, setModalContent] = useState(null); // state variable to store the modal content (image URL)
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; // check if the device is an iOS device
 
   const capture = React.useCallback(() => {
     const imageSrc = webcamRef.current.getScreenshot();
@@ -68,6 +70,44 @@ function App() {
     setShowSelfie(true); // show the selfie and webcam component again
     setPhotos([]); // clear the photos from the state variable
   };
+
+  const handleImageAction = async (imageUrl) => {
+    // Check if the device is iOS
+    console.log(navigator.userAgent);
+    // const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  
+    if (isIOS) {
+      // iOS devices - use the Web Share API
+      try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], 'CamToYou-downloaded-photo.jpg', { type: blob.type });
+  
+        if (navigator.share) {
+          await navigator.share({
+            files: [file],
+            title: 'Downloaded Photo',
+            text: 'My photo from the event!',
+          });
+        } else {
+          console.log('Web Share API is not supported in your browser.');
+          // Fallback for iOS browsers that do not support sharing files
+          // You can display the image in a new tab or offer instructions to download manually
+        }
+      } catch (error) {
+        console.error('Sharing failed', error);
+      }
+    } else {
+      // Non-iOS devices - trigger a normal download
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = 'CamToYou-downloaded-photo.jpg'; // Provide a default filename for the download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+  
 
   return (
     <div className="App">
@@ -134,7 +174,9 @@ function App() {
             Close
           </Button>
           <a href={modalContent} download> {/*use an anchor tag with a download attribute to enable downloading the image*/}
-            <Button variant="primary">Download</Button>
+          <Button variant="primary" onClick={() => handleImageAction(modalContent)}>
+            {isIOS ? 'Share' : 'Download'}
+          </Button>
           </a>
         </Modal.Footer>
       </Modal>
