@@ -71,18 +71,15 @@ function App() {
     setPhotos([]); // clear the photos from the state variable
   };
 
-  const handleImageAction = async (imageUrl) => {
-    // Check if the device is iOS
-    console.log(navigator.userAgent);
-    // const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  
+  const handleImageAction = async (imageUrl) => { 
     if (isIOS) {
       // iOS devices - use the Web Share API
       try {
-        const response = await fetch(imageUrl);
+        const response = await fetch(imageUrl, { mode: 'no-cors' });
         const blob = await response.blob();
-        const file = new File([blob], 'CamToYou-downloaded-photo.jpg', { type: blob.type });
-  
+        const file = new File([blob], 'CamToYou-downloaded-photo.jpg', { type: 'image/jpeg' });
+        console.log('Navigator.share: ', navigator.share);
+        console.log('navigator.canShare: ', navigator.canShare);
         if (navigator.share) {
           await navigator.share({
             files: [file],
