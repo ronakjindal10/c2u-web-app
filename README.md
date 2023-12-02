@@ -14,8 +14,8 @@ This is a react app that allows users to take a selfie and get their photos from
 - CSS
 - Cam to You branding
 - Contact info
-- Compress selfie before uploading
-- Placeholder image for photos while they're loading. Helpful when network speed is low
+~~- Compress selfie before uploading~~
+~~- Placeholder image for photos while they're loading. Helpful when network speed is low~~
 - Improve communication if no photos are found
 ~~- Download button doesn't actually download the photo~~
 ~~- Handle download button behaviour on iOS~~
