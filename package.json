@@ -8,12 +8,13 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "1.5.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4",
-    "react-webcam": "7.1.1",
     "react-bootstrap": "2.9.0",
-    "react-modal": "^3.16.1"
+    "react-dom": "^18.2.0",
+    "react-helmet": "^6.1.0",
+    "react-modal": "^3.16.1",
+    "react-scripts": "5.0.1",
+    "react-webcam": "7.1.1",
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",

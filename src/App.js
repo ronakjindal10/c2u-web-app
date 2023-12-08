@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import {Helmet} from "react-helmet";
 import Webcam from "react-webcam";
 import axios from "axios";
 import { Container, Row, Col, Button, Spinner, Modal } from "react-bootstrap";
@@ -9,19 +10,30 @@ function App() {
   const [imgSrc, setImgSrc] = useState(null);
   const [showSelfie, setShowSelfie] = useState(true); // state variable to show or hide the selfie and webcam component
   const [loading, setLoading] = useState(false); // state variable to show or hide the loading animation
-  const [imageLoaded, setImageLoaded] = useState({}); // state variable to  track if an image has loaded
+  const [imageLoadStatus, setImageLoadStatus] = useState({}); // state variable to  track if an image has loaded
   const [photos, setPhotos] = useState([]); // state variable to store the photos from the API response
   const [showModal, setShowModal] = useState(false); // state variable to show or hide the modal component
   const [modalContent, setModalContent] = useState(null); // state variable to store the modal content (image URL)
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; // check if the device is an iOS device
 
   const capture = React.useCallback(() => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    const file = base64ToFile(imageSrc, "image/jpeg", "selfie.jpg");
-    setImgSrc(file);
-    setShowSelfie(false); // hide the selfie and webcam component after capturing
-    setLoading(true); // show the loading animation while fetching the photos
-    fetchPhotos(file); // call the function to fetch the photos from the API
+    const processSelfieAndFetchPhotos = async () => {
+      const imageSrc = webcamRef.current.getScreenshot();
+      const file = base64ToFile(imageSrc, "image/jpeg", "selfie.jpg");
+      setImgSrc(file);
+      setShowSelfie(false); // hide the selfie and webcam component after capturing
+      setLoading(true); // show the loading animation while fetching the photos
+  
+      try {
+        const processedSelfie = await compressAndResizeImage(file);
+        fetchPhotos(processedSelfie); // call the function to fetch the photos from the API
+      } catch (error) {
+        console.error('Error processing the selfie:', error);
+        // Handle the error appropriately
+      }
+    };
+  
+    processSelfieAndFetchPhotos();
   }, [webcamRef]);
 
   // This is a helper function that converts a base64 string to a file object
@@ -46,6 +58,10 @@ function App() {
       console.log(response.data);
       if (response.data.message === "Photos found for your selfie") {
         setPhotos(response.data.imageUrls); // store the photos in the state variable
+        setImageLoadStatus(response.data.imageUrls.reduce((status, url) => {
+          status[url] = false;
+          return status;
+        }, {})); // set the image load status to false for all the photos
       } else {
         alert("No photos found for your selfie. Please try again later.");
       }
@@ -105,9 +121,65 @@ function App() {
     }
   };
   
+  const handleImageLoad = (imageUrl) => {
+    setImageLoadStatus(prevStatus => ({ ...prevStatus, [imageUrl]: true }));
+  };
+
+  function compressAndResizeImage(file, maxWidth = 800, maxHeight = 600, quality = 0.5) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.src = URL.createObjectURL(file);
+  
+      image.onload = () => {
+        let width = image.width;
+        let height = image.height;
+  
+        // Calculate the new dimensions maintaining the aspect ratio
+        if (width > height) {
+          if (width > maxWidth) {
+            height = height * (maxWidth / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = width * (maxHeight / height);
+            height = maxHeight;
+          }
+        }
+  
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(image, 0, 0, width, height);
+  
+        canvas.toBlob(blob => {
+          resolve(new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          }));
+        }, 'image/jpeg', quality);
+      };
+  
+      image.onerror = error => reject(error);
+    });
+  }  
 
   return (
     <div className="App">
+      <Helmet>
+        {/* Google Analytics */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-YCGC9KDZ2B"></script>
+        <script>
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-YCGC9KDZ2B');
+          `}
+        </script>
+      </Helmet>
       <Container fluid>
         <Row className="header">
           <Col>
@@ -150,16 +222,22 @@ function App() {
         <Row className="photos">
           {photos.map((photo, index) => ( // map over the photos array and render each photo in a column
             photo && ( // only render the photo if it is not null
-              <Col key={index} xs={4} className="photo">
+            <Col key={index} xs={4} className="photo">
+              {console.log(imageLoadStatus)}
+              {!imageLoadStatus[photo] ? (
+                <div className="photo-placeholder" />
+                ) : null}
                 <img
                   src={photo}
                   alt={`photo-${index}`}
                   className="photo-image"
+                  style={{ display: imageLoadStatus[photo] ? 'block' : 'none' }}
+                  onLoad={() => handleImageLoad(photo)} // call the handleImageLoad function with the photo URL when the image loads
                   onClick={() => handleShowModal(photo)} // call the handleShowModal function with the photo URL when clicked
                 />
               </Col>
-            )
-          ))}
+              )
+            ))}
         </Row>
       </Container>
       <Modal show={showModal} onHide={handleCloseModal} size="lg" centered> {/*render the modal component with the modalContent as the image URL*/}
@@ -177,7 +255,7 @@ function App() {
           </a>
         </Modal.Footer>
       </Modal>
-    </div>
+</div>
   );
 }
 
