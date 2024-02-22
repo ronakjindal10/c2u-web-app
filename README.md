@@ -22,3 +22,5 @@ This is a react app that allows users to take a selfie and get their photos from
 - Handle download button behaviour on iOS
 - Swipe through the photos to browse through them like on Google photos
 ~~- Add analytics to the website~~
+- Currently, Instagram modal is shown as soon as the photos load. We need to show the instagram modal after the user clicks on download button in the modal of a photo
+- Need to implement logic to download vcard file if contactCard is true

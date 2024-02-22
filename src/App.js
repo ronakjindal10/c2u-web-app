@@ -62,20 +62,25 @@ function App() {
       );
       console.log(response.data);
       if (response.data.message === "Photos found for your selfie") {
-        setPhotos(response.data.imageUrls);
-        setImageLoadStatus(response.data.imageUrls.reduce((status, url) => {
-          status[url] = false;
-          return status;
-        }, {}));
-        response.data.imageUrls.forEach((url) => {
-          if (response.data.instagramLinks && response.data.instagramLinks[url] && !shownInstagramLinks.includes(url)) {
-            // if(true) {
-            setInstagramLink(response.data.instagramLinks[url]);
-            // setInstagramLink('https://www.instagram.com/reveweddings/');
+        console.log(response.data.photos)
+        // Initialize an empty array for photos
+        const newPhotos = [];
+        const newImageLoadStatus = {};
+        response.data.photos.forEach((photo) => {
+          // Check if imageUrls is not null before proceeding
+          if (photo.imageUrls) {
+            newPhotos.push(photo.imageUrls);
+            newImageLoadStatus[photo.imageUrls] = false; // Initialize loading status for this URL
+          }
+          // Check for Instagram link and add it if not already shown
+          if (photo.instagramLink && !shownInstagramLinks.includes(photo.instagramLink)) {
+            setInstagramLink(photo.instagramLink);
             setShowInstagramModal(true);
-            setShownInstagramLinks([...shownInstagramLinks, url]);
+            setShownInstagramLinks((prevLinks) => [...prevLinks, photo.instagramLink]);
           }
         });
+        setPhotos(newPhotos);
+        setImageLoadStatus(newImageLoadStatus);
       } else {
         alert("No photos found for your selfie. Please try again later.");
       }
