@@ -57,6 +57,7 @@ function App() {
       const formData = new FormData();
       formData.append("selfie", file);
       const response = await axios.post(
+        //"http://localhost:3001/get-my-photos",
         "https://c2u-api.onrender.com/get-my-photos",
         formData
       );
@@ -67,16 +68,17 @@ function App() {
         const newPhotos = [];
         const newImageLoadStatus = {};
         response.data.photos.forEach((photo) => {
-          // Check if imageUrls is not null before proceeding
-          if (photo.imageUrls) {
+          if(photo && photo.imageUrls){
+            // Check if imageUrls is not null before proceeding
+            console.log(photo)
             newPhotos.push(photo.imageUrls);
             newImageLoadStatus[photo.imageUrls] = false; // Initialize loading status for this URL
-          }
-          // Check for Instagram link and add it if not already shown
-          if (photo.instagramLink && !shownInstagramLinks.includes(photo.instagramLink)) {
-            setInstagramLink(photo.instagramLink);
-            setShowInstagramModal(true);
-            setShownInstagramLinks((prevLinks) => [...prevLinks, photo.instagramLink]);
+            // Check for Instagram link and add it if not already shown
+            if (photo.instagramLink && !shownInstagramLinks.includes(photo.instagramLink)) {
+              setInstagramLink(photo.instagramLink);
+              // setShowInstagramModal(true);
+              // setShownInstagramLinks((prevLinks) => [...prevLinks, photo.instagramLink]);
+            }
           }
         });
         setPhotos(newPhotos);
@@ -134,6 +136,7 @@ function App() {
     }
     if (instagramLink && !shownInstagramLinks.includes(instagramLink)) {
       setShowInstagramModal(true);
+      setShownInstagramLinks((prevLinks) => [...prevLinks, instagramLink]);
     }
   };
   
