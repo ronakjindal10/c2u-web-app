@@ -111,7 +111,13 @@ function App() {
   const handleImageAction = async (imageUrl) => { 
     if (isIOS) {
       try {
-        const response = await fetch(imageUrl);
+        const response = await fetch(imageUrl, {
+          mode: 'cors', // Specify CORS mode
+          headers: {
+            'Access-Control-Allow-Origin': '*', // Specify the allowed origin (replace * with your domain if known)
+            // Add any other required headers here
+          }
+        });
         const blob = await response.blob();
         const file = new File([blob], 'CamToYou-downloaded-photo.jpg', { type: 'image/jpeg' });
         console.log('Navigator.share: ', navigator.share);
