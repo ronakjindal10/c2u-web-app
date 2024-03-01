@@ -111,9 +111,11 @@ function App() {
   const handleImageAction = async (imageUrl) => { 
     if (isIOS) {
       try {
-        const response = await fetch(imageUrl, { mode: 'no-cors' });
+        const response = await fetch(imageUrl);
         const blob = await response.blob();
         const file = new File([blob], 'CamToYou-downloaded-photo.jpg', { type: 'image/jpeg' });
+        console.log('Navigator.share: ', navigator.share);
+        console.log('navigator.canShare: ', navigator.canShare);
         if (navigator.share) {
           await navigator.share({
             files: [file],
