@@ -272,9 +272,11 @@ function App() {
           <Button variant="secondary" onClick={handleCloseModal}>
             Close
           </Button>
-          <Button variant="primary" onClick={() => handleImageAction(modalContent)}>
-            {isIOS ? 'Share' : 'Download'}
-          </Button>
+          {!isIOS && (
+            <Button variant="primary" onClick={() => handleImageAction(modalContent)}>
+              Download
+            </Button>
+          )}
         </Modal.Footer>
       </Modal>
       <Modal show={showInstagramModal} onHide={() => setShowInstagramModal(false)} size="lg" centered>
