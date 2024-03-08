@@ -114,18 +114,25 @@ function App() {
       try {
         const response = await fetch(proxyImageUrl);
         const blob = await response.blob();
-        const file = new File([blob], 'CamToYou-downloaded-photo.jpg', { type: 'image/jpeg' });
+        const arrayBuffer = await blob.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        const file = new File([uint8Array], 'CamToYou-downloaded-photo.jpg', { type: 'image/jpeg' });
   
-        // Check if the Web Share API is supported
-        if (navigator.share) {
-          await navigator.share({
-            files: [file],
-            title: 'Downloaded Photo',
-            text: 'My photo from the event!',
-          });
-          //console.log('Image shared successfully');
+        // Check if the device supports sharing the file
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          // Check if the Web Share API is supported
+          if (navigator.share) {
+            await navigator.share({
+              files: [file],
+              title: 'Downloaded Photo',
+              text: 'My photo from the event!',
+            });
+            console.log('Image shared successfully');
+          } else {
+            console.log('Web Share API is not supported in your browser.');
+          }
         } else {
-          console.log('Web Share API is not supported in your browser.');
+          console.log('Sharing files is not supported on this device.');
         }
       } catch (error) {
         console.error('Sharing failed', error);
