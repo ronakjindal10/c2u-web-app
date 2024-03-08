@@ -61,16 +61,15 @@ function App() {
         "https://c2u-api.onrender.com/get-my-photos",
         formData
       );
-      console.log(response.data);
       if (response.data.message === "Photos found for your selfie") {
-        console.log(response.data.photos)
+        //console.log(response.data.photos)
         // Initialize an empty array for photos
         const newPhotos = [];
         const newImageLoadStatus = {};
         response.data.photos.forEach((photo) => {
           if(photo && photo.imageUrls){
             // Check if imageUrls is not null before proceeding
-            console.log(photo)
+            //console.log(photo)
             newPhotos.push(photo.imageUrls);
             newImageLoadStatus[photo.imageUrls] = false; // Initialize loading status for this URL
             // Check for Instagram link and add it if not already shown
@@ -108,26 +107,23 @@ function App() {
     setPhotos([]);
   };
 
-  const handleImageAction = async (imageUrl) => { 
+  const handleImageAction = async (imageUrl) => {
+    const proxyImageUrl = `https://c2u-api.onrender.com/images/${imageUrl.split('/').pop()}`;
+  
     if (isIOS) {
       try {
-        const response = await fetch(imageUrl, {
-          mode: 'cors', // Specify CORS mode
-          headers: {
-            'Access-Control-Allow-Origin': '*', // Specify the allowed origin (replace * with your domain if known)
-            // Add any other required headers here
-          }
-        });
+        const response = await fetch(proxyImageUrl);
         const blob = await response.blob();
         const file = new File([blob], 'CamToYou-downloaded-photo.jpg', { type: 'image/jpeg' });
-        console.log('Navigator.share: ', navigator.share);
-        console.log('navigator.canShare: ', navigator.canShare);
+  
+        // Check if the Web Share API is supported
         if (navigator.share) {
           await navigator.share({
             files: [file],
             title: 'Downloaded Photo',
             text: 'My photo from the event!',
           });
+          //console.log('Image shared successfully');
         } else {
           console.log('Web Share API is not supported in your browser.');
         }
@@ -135,6 +131,7 @@ function App() {
         console.error('Sharing failed', error);
       }
     } else {
+      // Handle non-iOS devices (download functionality)
       const link = document.createElement('a');
       link.href = imageUrl;
       link.download = 'CamToYou-downloaded-photo.jpg';
@@ -142,6 +139,8 @@ function App() {
       link.click();
       document.body.removeChild(link);
     }
+  
+    // Show Instagram modal if necessary
     if (instagramLink && !shownInstagramLinks.includes(instagramLink)) {
       setShowInstagramModal(true);
       setShownInstagramLinks((prevLinks) => [...prevLinks, instagramLink]);
@@ -272,11 +271,9 @@ function App() {
           <Button variant="secondary" onClick={handleCloseModal}>
             Close
           </Button>
-          {!isIOS && (
-            <Button variant="primary" onClick={() => handleImageAction(modalContent)}>
-              Download
-            </Button>
-          )}
+          <Button variant="primary" onClick={() => handleImageAction(modalContent)}>
+            {isIOS ? 'Share' : 'Download'}
+          </Button>
         </Modal.Footer>
       </Modal>
       <Modal show={showInstagramModal} onHide={() => setShowInstagramModal(false)} size="lg" centered>
