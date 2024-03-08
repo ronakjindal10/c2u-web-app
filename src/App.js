@@ -123,9 +123,7 @@ function App() {
           // Check if the Web Share API is supported
           if (navigator.share) {
             await navigator.share({
-              files: [file],
-              title: 'Downloaded Photo',
-              text: 'My photo from the event!',
+              files: [file]
             });
             console.log('Image shared successfully');
           } else {
