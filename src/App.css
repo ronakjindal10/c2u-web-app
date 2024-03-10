@@ -92,10 +92,12 @@ h1 {
 
 .retake-selfie-button {
   margin: 5px;
+  font-size: 0.85rem;
 }
 
 .help-button {
   margin: 5px;
+  font-size: 0.85em;
 }
 
 /* media queries for responsiveness */

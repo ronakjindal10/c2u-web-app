@@ -3,7 +3,8 @@ import {Helmet} from "react-helmet";
 import Webcam from "react-webcam";
 import axios from "axios";
 import { Container, Row, Col, Button, Spinner, Modal } from "react-bootstrap";
-import { FaWhatsapp } from 'react-icons/fa'; // Import WhatsApp icon
+import { IoLogoWhatsapp } from "react-icons/io5"; // Import WhatsApp icon
+import { IoCameraOutline } from "react-icons/io5"; //Import camera icon
 import "./App.css";
 
 function App() {
@@ -217,10 +218,10 @@ function App() {
           </Col>
           <Col className="retake-help-button">
             <Button variant="outline-primary" onClick={retakeSelfie} className="retake-selfie-button">
-              Retake Selfie
+            <IoCameraOutline /> Retake
             </Button>
             <Button variant="outline-primary" onClick={() => window.open('https://wa.me/918282809499', '_blank')} className="help-button">
-              <FaWhatsapp /> Help
+            <IoLogoWhatsapp /> Help
             </Button>
           </Col>
         </Row>
