@@ -3,6 +3,7 @@ import {Helmet} from "react-helmet";
 import Webcam from "react-webcam";
 import axios from "axios";
 import { Container, Row, Col, Button, Spinner, Modal } from "react-bootstrap";
+import { FaWhatsapp } from 'react-icons/fa'; // Import WhatsApp icon
 import "./App.css";
 
 function App() {
@@ -214,12 +215,13 @@ function App() {
           <Col>
             <h1>CamToYou</h1>
           </Col>
-          <Col className="retake-button">
-            {photos.length > 0 && (
-              <Button variant="outline-primary" onClick={retakeSelfie}>
-                Retake Selfie
-              </Button>
-            )}
+          <Col className="retake-help-button">
+            <Button variant="outline-primary" onClick={retakeSelfie} className="retake-selfie-button">
+              Retake Selfie
+            </Button>
+            <Button variant="outline-primary" onClick={() => window.open('https://wa.me/918282809499', '_blank')} className="help-button">
+              <FaWhatsapp /> Help
+            </Button>
           </Col>
         </Row>
         {showSelfie ? (
