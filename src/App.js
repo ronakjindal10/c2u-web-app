@@ -64,16 +64,16 @@ function App() {
         formData
       );
       if (response.data.message === "Photos found for your selfie") {
-        //console.log(response.data.photos)
+        console.log(response.data.photos)
         // Initialize an empty array for photos
         const newPhotos = [];
         const newImageLoadStatus = {};
         response.data.photos.forEach((photo) => {
-          if(photo && photo.imageUrls){
-            // Check if imageUrls is not null before proceeding
-            //console.log(photo)
-            newPhotos.push(photo.imageUrls);
-            newImageLoadStatus[photo.imageUrls] = false; // Initialize loading status for this URL
+          if(photo && photo.imageUrl){
+            // Check if imageUrl is not null before proceeding
+            console.log(photo)
+            newPhotos.push(photo.imageUrl);
+            newImageLoadStatus[photo.imageUrl] = false; // Initialize loading status for this URL
             // Check for Instagram link and add it if not already shown
             if (photo.instagramLink && !shownInstagramLinks.includes(photo.instagramLink)) {
               setInstagramLink(photo.instagramLink);
