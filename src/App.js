@@ -20,6 +20,7 @@ function App() {
   const [shownInstagramLinks, setShownInstagramLinks] = useState(() => JSON.parse(localStorage.getItem('shownInstagramLinks')) || []);
   const [showInstagramModal, setShowInstagramModal] = useState(false);
   const [instagramLink, setInstagramLink] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false); // New state for action loading
 
   useEffect(() => {
     localStorage.setItem('shownInstagramLinks', JSON.stringify(shownInstagramLinks));
@@ -109,11 +110,12 @@ function App() {
   };
 
   const handleImageAction = async (imageUrl) => {
+    setActionLoading(true); // Start loading
     const proxyImageUrl = `https://c2u-api.onrender.com/images/${imageUrl.split('.com/').pop()}`;
     // const proxyImageUrl = `http://localhost:3001/images/${imageUrl.split('.com/').pop()}`;
   
-    if (isIOS) {
-      try {
+    try {
+      if (isIOS) {
         const response = await fetch(proxyImageUrl);
         const blob = await response.blob();
         const arrayBuffer = await blob.arrayBuffer();
@@ -134,17 +136,21 @@ function App() {
         } else {
           console.log('Sharing files is not supported on this device.');
         }
-      } catch (error) {
-        console.error('Sharing failed', error);
+      } else {
+        // Handle non-iOS devices (download functionality)
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = 'CamToYou-downloaded-photo.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
-    } else {
-      // Handle non-iOS devices (download functionality)
-      const link = document.createElement('a');
-      link.href = imageUrl;
-      link.download = 'CamToYou-downloaded-photo.jpg';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    }
+    catch (error) {
+        console.error('Sharing failed', error);
+    }
+    finally {
+      setActionLoading(false); // End loading
     }
   
     // Show Instagram modal if necessary
@@ -280,7 +286,7 @@ function App() {
             Close
           </Button>
           <Button variant="primary" onClick={() => handleImageAction(modalContent)}>
-            {isIOS ? 'Share' : 'Download'}
+            {actionLoading ? <Spinner animation="border" size="sm" /> : (isIOS ? 'Share' : 'Download')}
           </Button>
         </Modal.Footer>
       </Modal>
